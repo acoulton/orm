@@ -45,6 +45,7 @@ class TestUtil
     {
         $conn = DriverManager::getConnection(self::getConnectionParams());
 
+        \file_put_contents('php://stderr', "\nUsing DB driver ".\get_class($conn->getDriver())."\n");
         self::addDbEventSubscribers($conn);
 
         return $conn;
@@ -61,8 +62,11 @@ class TestUtil
     private static function getConnectionParams()
     {
         if (self::hasRequiredConnectionParams()) {
+            \file_put_contents('php://stderr', "\nUsing specified DB\n");
             return self::getSpecifiedConnectionParams();
         }
+
+        \file_put_contents('php://stderr', "\nUsing fallback DB\n");
 
         return self::getFallbackConnectionParams();
     }
