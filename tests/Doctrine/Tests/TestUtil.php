@@ -8,6 +8,9 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
 
 use function explode;
+use function fwrite;
+use function get_class;
+use function sprintf;
 use function unlink;
 
 /**
@@ -43,7 +46,18 @@ class TestUtil
      */
     public static function getConnection(): Connection
     {
-        $conn = DriverManager::getConnection(self::getConnectionParams());
+        $params = self::getConnectionParams();
+        $conn   = DriverManager::getConnection($params);
+        // Note, writes direct to STDERR to prevent phpunit detecting output - otherwise this would cause either an
+        // "unexpected output" warning or a failure on the first test case to call this method.
+        fwrite(
+            STDERR,
+            sprintf(
+                "\nUsing DB driver %s (from %s connection params)\n",
+                get_class($conn->getDriver()),
+                $params['is_fallback'] ? 'fallback' : 'specified'
+            )
+        );
 
         self::addDbEventSubscribers($conn);
 
@@ -92,6 +106,7 @@ class TestUtil
     private static function getSpecifiedConnectionParams()
     {
         $realDbParams = self::getParamsForMainConnection();
+        $realDbParams['is_fallback'] = false;
 
         if (! self::$initialized) {
             $tmpDbParams = self::getParamsForTemporaryConnection();
@@ -135,6 +150,7 @@ class TestUtil
         $params = [
             'driver' => 'pdo_sqlite',
             'memory' => true,
+            'is_fallback' => true,
         ];
 
         if (isset($GLOBALS['db_path'])) {
