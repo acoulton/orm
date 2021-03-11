@@ -59,6 +59,20 @@ class TestUtil
             )
         );
 
+        if (isset($_ENV['EXPECT_DB_DRIVER'])) {
+            // Compare the resolved driver type manually rather than using a phpunit assert method, so that we don't
+            // affect phpunit's count of assertions run during the calling test.
+            if ($_ENV['EXPECT_DB_DRIVER'] !== $params['driver']) {
+                throw new \UnexpectedValueException(
+                    sprintf(
+                        "Invalid test environment config\n - EXPECT_DB_DRIVER = `%s`\n - Actual driver    = `%s`",
+                        $_ENV['EXPECT_DB_DRIVER'],
+                        $params['driver']
+                    )
+                );
+            }
+        }
+
         self::addDbEventSubscribers($conn);
 
         return $conn;
